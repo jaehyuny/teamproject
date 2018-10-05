@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.BookDAO">
+	<resultMap type="com.team.project.entities.Book" id="bookMap">
+	</resultMap>
+
+<select id="selectBook" parameterType="int" resultMap="bookMap">
+	select book.code, authorcode, book.name, price, realprice, stock, book.discription, publisher, contentlist, sellerdiscription,
+	cat1, cat2, publishyear, publishmonth, publishday, splashtext, booktype, pagenumber, scale, isbn, trailer,averagescore,evaluaternum,
+	author.name as authorname, author.discription as authordiscription, author.birthyear as authoryear, author.picture as authorpicture
+	from book,author
+	where book.authorcode = author.code and book.code=#{code};
+</select>
+
+<select id="selectAll" resultMap="bookMap">
+	select book.code, authorcode, book.name, price, realprice, stock, book.discription, publisher, contentlist, sellerdiscription,
+	cat1, cat2, publishyear, publishmonth, publishday, splashtext, booktype, pagenumber, scale, isbn, trailer,averagescore,evaluaternum,
+	author.name as authorname
+	from book,author
+	where book.authorcode = author.code order by book.code desc;
+</select>
+
+<select id="selectAllPaging" parameterType="hashmap" resultMap="bookMap">
+	select book.code, authorcode, book.name, price, realprice, stock, book.discription, publisher, contentlist, sellerdiscription,
+	cat1, cat2, publishyear, publishmonth, publishday, splashtext, booktype, pagenumber, scale, isbn, trailer,averagescore,evaluaternum,
+	author.name as authorname
+	from book,author
+	where book.authorcode = author.code and (book.name like CONCAT('%', #{find}, '%') OR book.code like CONCAT('%', #{find}, '%') OR 
+	publisher like CONCAT('%', #{find}, '%')) order by book.code desc limit #{startrow},#{endrow};
+</select>
+
+<insert id="insertBook" parameterType="hashMap">
+	insert into book (code, authorcode, name, price, realprice, stock, discription, publisher, contentlist, sellerdiscription,
+	cat1, publishyear, publishmonth, publishday, splashtext, booktype, pagenumber, scale, isbn, trailer,averagescore,evaluaternum)
+	values((select ifnull(max(code)+1,1) from book alias_book), #{authorcode}, #{name}, #{price}, #{realprice}, #{stock}, #{discription}, #{publisher}, #{contentlist}, #{sellerdiscription},
+	#{cat1}, #{publishyear}, #{publishmonth}, #{publishday}, #{splashtext}, #{booktype}, #{pagenumber}, #{scale}, #{isbn}, #{trailer},
+	#{averagescore}, #{evaluaternum})
+	<selectKey keyProperty="code" order="AFTER" resultType="int">
+	select max(code) from book;
+	</selectKey>
+</insert>
+
+<delete id="deleteBook" parameterType="int">
+	delete from basket where bookcode = #{code};
+	delete from book where code = #{code};
+</delete>
+
+<update id="updateBook" parameterType="hashMap">
+	update book set authorcode = #{authorcode}, name = #{name}, price = #{price}, realprice = #{realprice}, stock = #{stock}, discription = #{discription},
+	publisher = #{publisher}, contentlist = #{contentlist}, sellerdiscription = #{sellerdiscription},
+	cat1 = #{cat1}, publishyear = #{publishyear}, publishmonth = #{publishmonth}, publishday = #{publishday}, splashtext = #{splashtext}, booktype = #{booktype},
+	pagenumber = #{pagenumber}, scale = #{scale}, isbn = #{isbn}, trailer = #{trailer}, averagescore = #{averagescore}, evaluaternum = #{evaluaternum}
+	where code = #{code}
+</update>
+
+<select id="selectBookCode" resultType="int">
+	select max(code) from book
+</select>
+
+<select id="selectRowCount" parameterType="String" resultType="int">
+  	select count(*) from book where book.name like CONCAT('%', #{find}, '%') OR book.code like CONCAT('%', #{find}, '%') OR publisher like CONCAT('%', #{find}, '%')
+</select>
+
+<update id="updateScore" parameterType="int">
+		update book set averagescore=(
+		(
+			ifnull((
+				select sum(score) 
+				from bookevaluate 
+				where bookcode=#{bookcode}
+			),0)
+			+
+			ifnull((
+				select sum(score)
+				from board
+				where bookcode=#{bookcode}
+			),0)
+		)/((select count(*) from board where bookcode=#{bookcode}) + (select count(*) from bookevaluate where bookcode=#{bookcode}))
+		) where code=#{bookcode};
+	</update>
+	
+<update id="updateSubstractStock" parameterType="hashmap">
+	update book set stock = stock - #{stock} where code = #{code}
+</update>
+	
+	<select id="selectBookSearchByName" parameterType="String" resultMap="bookMap">
+	select * from book where name like concat('%',#{name},'%') limit 20;
+	</select>
+	<select id="selectByCategory" parameterType="String" resultMap="bookMap">
+	select * from book where cat1=#{category};
+	</select>
+	<select id="selectAdvanced" parameterType="hashMap" resultMap="bookMap">
+	select book.code, authorcode, book.name, price, realprice, stock, book.discription, publisher, contentlist, sellerdiscription,
+	cat1, cat2, publishyear, publishmonth, publishday, splashtext, booktype, pagenumber, scale, isbn, trailer,averagescore,evaluaternum,
+	author.name as authorname
+	from book,author
+	where cat1=#{category}
+	and book.name like concat('%',#{bookname},'%')
+	and author.name like concat('%',#{author},'%')
+	and publisher like concat('%',#{publisher},'%')
+	<![CDATA[
+	and price>=#{lowestprice}
+	and price<=#{highestprice}
+	]]> 
+	and author.code = book.authorcode
+	order by 
+	<choose>
+	<when test="order=='평점'">averagescore</when>
+	<when test="order=='신상품'">(publishyear+publishmonth+publishday)</when>
+	<when test="order=='가격'">price</when>
+	<when test="order=='평가수'">evaluaternum</when>
+	</choose>
+	<if test="desc==1"> desc</if>
+	;
+	</select>
+</mapper>

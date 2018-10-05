@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.UserDAO">
+
+	<resultMap type="com.team.project.entities.User" id="userMap">
+	</resultMap>
+	<resultMap type="com.team.project.entities.Grade" id="gradeMap">
+	</resultMap>
+	
+
+
+	<select id="selectByid" parameterType="String" resultType="int">
+		select count(*) from user where id=#{id}
+	</select>
+	<insert id="insertRow" parameterType="hashMap">
+		insert into user(id, password, name, nickname, phone1, phone2, phone3,
+		grade, point, connecttime)
+		value(#{id}, #{password}, #{name}, #{nickname}, #{phone1}, #{phone2}, #{phone3},
+		#{grade}, #{point}, sysdate())
+	</insert>
+	
+	<update id="updateConnectTime" parameterType="String">
+		update user set connecttime = sysdate() where id = #{id}
+	</update>
+	
+	
+	
+	<select id="selectUserGrade" resultMap="gradeMap">
+		select * from grade where code = #{grade}
+	</select>
+	
+	<select id="loginCheck" parameterType="hashMap" resultType="int">
+		select count(*) from user where id=#{id} and password =#{password}
+	</select>
+	<select id="selectName" parameterType="String" resultType="String">
+		select name from user where id=#{id}
+	</select>
+	
+	<select id="selectUser" resultMap="userMap">
+		select * from user where id=#{id}
+	</select>
+	
+	<select id="selectAll" resultMap="userMap">
+		select * from user
+	</select>
+	
+	<select id="selectAllPaging" parameterType="hashMap" resultMap="userMap">
+		select * from user where id like CONCAT('%', #{find}, '%') OR name like CONCAT('%', #{find}, '%') OR nickname like CONCAT('%', #{find}, '%') 
+		limit #{startrow},#{endrow}
+	</select>
+	
+	<update id="updateUser" parameterType="hashMap">
+	  	update user set name = #{name, jdbcType=VARCHAR}, password = #{password, jdbcType=VARCHAR}, phone1 = #{phone1, jdbcType=VARCHAR},
+	  	phone2 = #{phone2, jdbcType=VARCHAR}, phone3 = #{phone3, jdbcType=VARCHAR}, returnfinance = #{returnfinance, jdbcType=VARCHAR},
+	  	returnbank = #{returnbank, jdbcType=VARCHAR}, grade = #{grade, jdbcType=INTEGER}, point = #{point, jdbcType=INTEGER}, 
+	  	nickname = #{nickname, jdbcType=VARCHAR} where id= #{id}
+  	</update>
+  	
+  	<delete id="deleteUser" parameterType="String">
+  		delete from user where id = #{id}
+  	</delete>
+  	<update id="updateUserInfo" parameterType="hashMap">
+  		update user set phone1 = #{phone1},	phone2 = #{phone2}, phone3 = #{phone3},
+  		nickname = #{nickname} where id= #{id} and password=#{password}
+  	</update>
+  	<delete id="deleteUserInfo" parameterType="hashMap">
+  		delete from user where id=#{id} and password=#{password}
+  	</delete>
+  	<update id="updatePassword" parameterType="hashMap">
+  		update user set password = #{newpassword} where id=#{id} and password=#{password}
+  	</update>  	
+  	
+  	<select id="selectRowCount" parameterType="String" resultType="int">
+  		select count(*) from user where id like CONCAT('%', #{find}, '%') OR name like CONCAT('%', #{find}, '%') OR nickname like CONCAT('%', #{find}, '%')
+  	</select>
+	<update id="subtractUserPoint" parameterType="hashMap">
+		update user set point = point - #{point} where id=#{id}
+	</update>
+	<update id="addUserPoint" parameterType="hashMap">
+		update user set point = point + #{point} where id=#{id}
+	</update>
+</mapper>

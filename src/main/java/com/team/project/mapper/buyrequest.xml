@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.BuyrequestDAO">
+	<resultMap type="com.team.project.entities.Buyrequest" id="buyrequestMap">
+	</resultMap>
+	<resultMap type="com.team.project.entities.Basket" id="basketMap">
+	</resultMap>
+
+	<select id="selectBasket" resultMap="basketMap">
+		select *, B.name as bookname, B.realprice as bookprice
+		from basket A, book B 
+		where userid=#{userid} and A.bookcode = B.code
+	</select>
+	
+	<select id="selectBuyRequest" resultMap="buyrequestMap">
+		select * from buyrequest order by code desc
+	</select>
+	
+	<select id="selectBuyRequestPaging" parameterType="hashmap" resultMap="buyrequestMap">
+		select * from buyrequest where state like CONCAT('%', #{find}, '%')
+		order by code desc limit #{startrow},#{endrow}
+	</select>
+	
+	<select id="selectBuyRequestSearch" parameterType="String" resultMap="buyrequestMap">
+		select * from buyrequest where state = #{state} order by code desc
+	</select>
+	
+	<update id="updateState" parameterType="hashmap">
+		update buyrequest set state = #{state}, completeday = #{completeday} where buyerid = #{buyerid}
+	</update>
+	
+	<update id="updateOrderCancel" parameterType="hashmap">
+		update buyrequest set state = '주문취소' 
+		where buyerid = #{buyerid} and code = #{code}
+	</update>
+	
+	<insert id="insertBuyRequest" parameterType="hashmap">
+	
+		insert into buyrequest (
+			code, buyerid, state, completeday, usedpoint, couponcode,
+			finalprice, returnfinance, returnbank, receiverphone, receivertell,
+			postno, address1, address2, receivername, getpoint, time, shippingprice
+		) values (
+			(select ifnull(max(code)+1,1) from buyrequest aaa),
+			#{buyerid, jdbcType=VARCHAR},
+			#{state, jdbcType=VARCHAR},
+			#{completeday},
+			#{usedpoint, jdbcType=INTEGER},
+			if(#{couponcode} = 0, null, #{couponcode}),
+			#{finalprice, jdbcType=INTEGER},
+			#{returnfinance, jdbcType=VARCHAR},
+			#{returnbank, jdbcType=VARCHAR},
+			#{receiverphone, jdbcType=VARCHAR},
+			#{receivertell, jdbcType=VARCHAR},
+			#{postno, jdbcType=VARCHAR},
+			#{address1, jdbcType=VARCHAR},
+			#{address2, jdbcType=VARCHAR},
+			#{receivername, jdbcType=VARCHAR},
+			#{getpoint, jdbcType=INTEGER},
+			sysdate(),
+			#{shippingprice, jdbcType=INTEGER}
+		);
+		<selectKey resultType="int" keyProperty="code" order="AFTER">
+			select code from buyrequest where code = (select max(code) from buyrequest as ddong)
+	    </selectKey>
+	</insert>
+	
+	<select id="selectForPoint" parameterType="String" resultMap="buyrequestMap">
+		select distinct a.code, a.time, a.getpoint, a.usedpoint, a.getpoint-a.usedpoint stackpoint,
+		if(count(c.name)!=1,concat(min(c.name)," 외 ",count(c.name)-1,"건"),min(c.name)) bookname
+		from buyrequest a, buyrequestproduct b, book c
+		where a.code = b.ordercode and b.bookcode= c.code and buyerid=#{buyerid}
+		group by a.code order by a.code desc 
+	</select>
+	
+	<select id="selectRowCount" resultType="int">
+  		select count(*) from buyrequest where state like CONCAT('%', #{state}, '%')
+	</select>
+	<select id="selectForUserinfo" parameterType="String" resultMap="buyrequestMap">
+		select distinct a.time, a.code, a.finalprice+a.shippingprice pay, a.state,
+		if(count(c.name)!=1,concat(min(c.name)," 외 ",count(c.name)-1,"건"),min(c.name)) bookname
+		from buyrequest a, buyrequestproduct b, book c
+		where a.code = b.ordercode and b.bookcode= c.code and buyerid=#{buyerid}
+		and a.time > subdate(now(), interval 3 month)
+		group by a.code order by a.code desc
+	</select>
+	<select id="selectBestseller" parameterType="String" resultMap="buyrequestMap">
+		select c.code, sum(b.amount) bookcount, c.name bookname, d.name authorname,
+		c.publisher publisher, c.realprice realprice 
+		from buyrequest a, buyrequestproduct b, book c, author d
+		where a.code = b.ordercode and b.bookcode = c.code and c.authorcode = d.code
+		group by c.code order by bookcount desc limit 5;
+	</select>
+	
+	<select id="selectRecentOrder" resultMap="buyrequestMap">
+		select * from buyrequest where buyerid = #{buyerid} order by code desc limit 1;
+	</select>
+	
+	<select id="selectOrderCount" parameterType="String" resultType="int">
+		select count(*) from buyrequest where buyerid = #{buyerid} and
+		time > subdate(now(), interval 3 month)
+	</select>
+	<select id="selectForMyOrder" parameterType="String" resultMap="buyrequestMap">
+		select distinct a.time, a.code, a.finalprice+a.shippingprice pay, a.state,
+		if(count(c.name)!=1,concat(min(c.name)," 외 ",count(c.name)-1,"건"),min(c.name)) bookname
+		from buyrequest a, buyrequestproduct b, book c
+		where a.code = b.ordercode and b.bookcode= c.code and buyerid=#{buyerid}		
+		group by a.code order by a.code desc
+	</select>
+	<select id="selectForSum" parameterType="String" resultMap="buyrequestMap">
+		select ifnull(sum(finalprice),0) totalsum,
+		ifnull(sum(if(time>subdate(now(), interval 3 month),finalprice,null)),0) threemonthsum
+		from buyrequest where buyerid=#{buyerid};
+	</select>
+	<select id="selectByCode" parameterType="String" resultMap="buyrequestMap">
+		select distinct a.time, a.code, a.finalprice+a.shippingprice pay, a.state, a.completeday,
+		a.usedpoint, a.finalprice, a.returnfinance, a.returnbank, a.receivertell, a.receiverphone,
+		a.receivername, a.postno, a.address1, a.address2, a.getpoint, a.shippingprice, sum(c.realprice*b.amount) realprice,
+		if(count(c.name)!=1,concat(min(c.name)," 외 ",count(c.name)-1,"건"),min(c.name)) bookname
+		from buyrequest a, buyrequestproduct b, book c
+		where a.code = b.ordercode and b.bookcode= c.code and a.code=#{code}		
+		group by a.code order by a.code desc
+	</select>
+	<select id="selectBookname" parameterType="String" resultMap="buyrequestMap">
+		select c.name bookname, b.amount amount from buyrequest a, buyrequestproduct b, book c
+		where a.code = b.ordercode and b.bookcode= c.code and a.code=#{code}
+		order by c.name asc
+	</select>
+</mapper>

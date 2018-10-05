@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.BoardDAO">
+	<resultMap type="com.team.project.entities.Board" id="boardMap">
+	</resultMap>
+	<!-- select -->
+	<select id="selectByBookcodeLimited" parameterType="int" resultMap="boardMap">
+		select * from board where bookcode=#{bookcode} order by time desc limit 2;
+	</select>
+	<select id="countByBookcode" parameterType="int" resultType="int">
+		select count(*) from board where bookcode=#{bookcode};
+	</select>
+	<!-- 자유게시판 리스트 -->
+	<select id="boardList" parameterType="hashMap" resultMap="boardMap">
+		select A.*,B.name as username from board A,user B where
+		A.userid=B.id AND
+		boardname = 'freeboard' AND
+		(title like CONCAT('%',#{find},'%') OR
+  		userid like CONCAT('%',#{find},'%') OR
+  		content like CONCAT('%',#{find},'%'))
+  		order by code desc limit #{startrow},#{endrow};
+	</select>
+	<select id="boardCount" parameterType="hashMap" resultType="integer">
+		select count(*) from board where
+		boardname ='freeboard' AND
+		(title like CONCAT('%',#{find},'%') OR
+  		userid like CONCAT('%',#{find},'%') OR
+  		content like CONCAT('%',#{find},'%'));
+	</select>
+	<!-- 리뷰게시판 리스트 -->
+	<select id="reviewList" parameterType="hashMap" resultMap="boardMap">
+		select A.*,B.name as bookname,C.name as username 
+		from board A, book B, user C where
+		A.bookcode=B.code AND
+		A.userid=C.id AND
+		boardname = 'reviewboard' AND
+		(title like CONCAT('%',#{find},'%') OR
+  		userid like CONCAT('%',#{find},'%') OR
+  		content like CONCAT('%',#{find},'%'))
+  		order by code desc limit #{startrow},#{endrow};
+	</select>
+	<select id="reviewCount" parameterType="hashMap" resultType="integer">
+		select count(*) from board where
+		boardname ='reviewboard' AND
+		(title like CONCAT('%',#{find},'%') OR
+  		userid like CONCAT('%',#{find},'%') OR
+  		content like CONCAT('%',#{find},'%'));
+	</select>
+	<select id="selectByCodeAndBoardName" parameterType="hashMap" resultMap="boardMap">
+		select * from board where code=#{code} and boardname= #{boardname}
+	</select>
+	<select id="selectByBookcode" parameterType="int" resultMap="boardMap">
+		select * from board where bookcode=#{bookcode} order by time desc;
+	</select>
+	<select id="selectByBookcodeLikeTop20" parameterType="int" resultMap="boardMap">
+		select * from board where bookcode=#{bookcode} order by likecount desc limit 20;
+	</select>
+	<!-- 자유게시판 상세보기 -->
+	<select id="boardDetail" parameterType="hashMap" resultMap="boardMap">
+		select A.*,B.name as username from board A, user B where
+		A.userid=B.id and
+		A.code=#{code} and
+		A.boardname=#{boardname};
+	</select>
+	<!-- 독후감 상세보기 -->
+	<select id="reviewDetail" parameterType="hashMap" resultMap="boardMap">
+		select A.*,B.name as bookname,D.name as authorname,B.price as price,B.realprice as realprice,B.publisher as publisher,
+		B.publishyear as publishyear,B.publishmonth as publishmonth,B.publishday as publishday,B.averagescore as averagescore, C.name as username
+		from board A, book B, user C,author D where 
+		A.bookcode=B.code and
+		A.userid=C.id and
+		B.authorcode=D.code and
+		A.code=#{code} and A.boardname = #{boardname};
+	</select>
+	<!-- 게시글 수정 -->
+	<update id="updateBoard" parameterType="hashMap">
+		update board set
+		content=#{content},title=#{title},time=#{time},ip=#{ip},bookcode=if(#{bookcode}=999999999,null,#{bookcode}),
+		isreview=#{isreview},ismanageronly=#{ismanageronly},score=#{score}
+		where code=#{code} and boardname=#{boardname};
+	</update>
+	<select id="faqList" resultMap="boardMap">
+		select * from board where boardname = 'faq' order by code desc;
+	</select>
+	<select id="mostFaqList" resultMap="boardMap">
+		select * from board where boardname = 'faq' order by hit desc;
+	</select>
+	<select id="selectFaq" parameterType="int" resultMap="boardMap">
+		select * from board where boardname = 'faq' and code=#{code};
+	</select>
+	<!-- 1:1 문의 내역 조회 -->
+	<select id="myQnaList" parameterType="String" resultMap="boardMap">
+		select * from board where userid=#{userid} and (boardname like CONCAT('%','qna','%'));
+	</select>
+	<!-- 관리자 1:1 문의 내역 조회 -->
+	<select id="allQnaList" resultMap="boardMap">
+		select * from board where (boardname like CONCAT('%','qna','%'));
+	</select>
+	<!-- 자유게시판&독후감 입력 -->
+	<insert id="insertBoard" parameterType="hashMap">
+		insert into board(code,boardname,userid,content,title,hit,attachfile,time,ip,ref,bookcode,isreview,ismanageronly,score,likecount,dislikecount
+		)value(
+		(select ifnull(max(code)+1,1) from board alise_code	where boardname=#{boardname}),#{boardname},#{userid},#{content},#{title},0,#{attachfile},
+		#{time},#{ip},0,if(#{bookcode}=999999999,null,#{bookcode}),
+		#{isreview},#{ismanageronly},#{score},0,0
+		);
+	</insert>
+	<!-- FAQ 입력 -->
+	<insert id="insertFaq" parameterType="hashMap">
+		insert into board(code,boardname,content,title,ip,ref,isreview,ismanageronly,score,likecount,dislikecount
+		)value(
+		(select ifnull(max(code)+1,1) from board alias_code),#{boardname},#{content},#{title},#{ip},0,0,0,0,0,0);
+	</insert>
+	<!-- 1:1 문의 입력 -->
+	<insert id="insertQna" parameterType="hashMap">
+		insert into board(code,boardname,userid,content,title,attachfile,time,ip,ref,isreview,ismanageronly,score,likecount,dislikecount
+		)value(
+		(select ifnull(max(code)+1,1) from board alise_code where boardname=#{boardname}),#{boardname},#{userid},#{content},#{title},#{attachfile},
+		#{time},#{ip},0,0,1,0,0,0);
+	</insert>
+	<!-- 1:1 문의 답변 -->
+	<update id="answerQna" parameterType="hashMap">
+		update board set content=#{content}, ref=1 where code=#{code} and boardname=#{boardname};
+	</update>
+	<select id="countReview" parameterType="String" resultType="int">
+		select count(*) from board where isreview = 1 and userid=#{id}
+	</select>
+	<!-- update -->
+	<update id="updateHit" parameterType="hashMap">
+		update board set hit = hit+1 where code=#{code} and boardname=#{boardname};
+	</update>
+	<update id="updateFaq" parameterType="hashmap">
+		update board set title = #{title}, content = #{content} where code=#{code};
+	</update>
+	<select id="reviewDuplicationCheck" parameterType="hashMap" resultType="int">
+		select count(*) from board where bookcode=#{bookcode} and userid=#{userid}
+	</select>
+	<select id="selectByUserid" parameterType="String" resultMap="boardMap">
+		select a.*, b.name bookname from board a, book b where a.bookcode = b.code and userid=#{userid} and isreview=1 
+	</select>
+	<delete id="deleteByCodeAndBoardName" parameterType="hashMap">
+		delete from board where code=#{code} and boardname=#{boardname};
+	</delete>
+	<delete id="deleteFaq" parameterType="int">
+		delete from board where code=#{code};
+	</delete>
+	<delete id="deleteByCode" parameterType="hashMap">
+		delete from board where code=#{code} and boardname=#{boardname};
+	</delete>
+	<delete id="deleteByRef" parameterType="hashMap">
+		delete from board where ref=#{ref} and boardname=#{boardname};
+	</delete>
+	<select id="selectHotReview" resultMap="boardMap">
+		select * from board where isreview = 1 order by hit desc limit 5;
+	</select>
+	
+	<insert id="insertEvent" parameterType="hashMap">
+        insert into board(code,boardname,userid,content,title,hit,attachfile,time,ip,ref,isreview,ismanageronly,score,likecount,dislikecount
+        )value(
+        (select ifnull(max(code)+1,1) from board alise_code    where boardname=#{boardname}),#{boardname},#{userid},#{content},#{title},0,#{attachfile},
+        #{time},#{ip},(select ifnull(max(code)+1,1) from board alise_code where boardname=#{boardname}),
+        #{isreview},#{ismanageronly},#{score},0,0
+        );
+        <selectKey resultType="int" keyProperty="code" order="AFTER">
+            select max(code) from board where boardname=#{boardname}
+        </selectKey>
+    </insert>
+	
+	
+	
+</mapper>

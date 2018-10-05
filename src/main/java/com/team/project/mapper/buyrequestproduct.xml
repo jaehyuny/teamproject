@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.BuyRequestProductDAO">
+	<resultMap type="com.team.project.entities.BuyRequestProduct" id="buyrequestproductMap">
+	</resultMap>
+
+	<insert id="insertBuyrequestProduct" parameterType="hashmap">
+		insert into buyrequestproduct (
+			ordercode, coupon, bookcode, usedpoint, amount, price, finalprice
+		) values (
+			#{ordercode, jdbcType=INTEGER},
+			if(#{coupon} = 0, null, #{coupon, jdbcType=INTEGER}),
+			#{bookcode, jdbcType=INTEGER},
+			#{usedpoint, jdbcType=INTEGER},
+			#{amount, jdbcType=INTEGER},
+			#{price, jdbcType=INTEGER},
+			#{finalprice, jdbcType=INTEGER}
+		)
+	</insert>
+	
+	<select id="selectBuyRequestProduct" parameterType="String" resultMap="buyrequestproductMap">
+		select A.amount, B.name as bookname from buyrequestproduct A, book B where A.bookcode = B.code 
+		and ordercode = #{code}
+	</select>
+	
+	<select id="selectRecentBuyProduct" resultMap="buyrequestproductMap">
+		select A.*, B.name as bookname 
+		from buyrequestproduct A, book B 
+		where A.bookcode = B.code and ordercode = #{ordercode}
+	</select>
+	
+</mapper>

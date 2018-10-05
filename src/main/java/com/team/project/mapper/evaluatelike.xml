@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.EvaluateLikeDAO">
+	<resultMap type="com.team.project.entities.EvaluateLike" id="evaluateLikeMap">
+	</resultMap>
+	<insert id="insert" parameterType="hashMap">
+	insert into evaluatelike values(
+	#{evaluatecode},
+	#{userid},
+	#{eval}
+	);
+	<if test="eval == '좋아요'">
+		update bookevaluate set likecount = likecount+1 where code=#{evaluatecode};
+	</if>
+	<if test="eval == '싫어요'">
+		update bookevaluate set dislikecount = dislikecount+1 where code=#{evaluatecode};
+	</if>
+	</insert>
+	<delete id ="delete" parameterType="hashMap">
+	<if test="eval == '좋아요'">
+		update bookevaluate set likecount = likecount-1 where code=#{evaluatecode};
+	</if>
+	<if test="eval == '싫어요'">
+		update bookevaluate set dislikecount = dislikecount-1 where code=#{evaluatecode};
+	</if>
+	delete from evaluatelike where evaluatecode=#{evaluatecode} and userid=#{userid}
+	</delete>
+	<select id="duplicateCheck" resultMap="evaluateLikeMap" parameterType="hashMap">
+		select * from evaluatelike where evaluatecode=#{evaluatecode} and userid=#{userid};
+	</select>
+	<update id="toggleBothLikeAndDislike" parameterType="hashMap">
+		<choose>
+			<when test="eval == '싫어요'">
+				update bookevaluate 
+				set likecount = likecount-1, dislikecount = dislikecount+1
+				where code=#{evaluatecode};
+				update evaluatelike
+				set eval='싫어요' where evaluatecode=#{evaluatecode} and userid=#{userid};
+			</when>
+			<otherwise>
+				update bookevaluate 
+				set likecount = likecount+1, dislikecount = dislikecount-1
+				where code=#{evaluatecode};
+				update evaluatelike
+				set eval='좋아요' where evaluatecode=#{evaluatecode} and userid=#{userid};
+			</otherwise>
+			</choose>
+		</update>
+</mapper>

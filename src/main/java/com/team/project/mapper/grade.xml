@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.GradeDAO">
+	<resultMap type="com.team.project.entities.Grade" id="gradeMap">
+	</resultMap>
+
+	<select id="selectGrade" resultMap="gradeMap">
+		select * from grade
+	</select>
+	
+	<select id="selectGradeCount" resultType="int">
+		select count(*) from grade
+	</select>
+	
+	<select id="selectGradeFromCode" resultMap="gradeMap">
+		select * from grade where code = #{code}
+	</select>
+
+
+</mapper>

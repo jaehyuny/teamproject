@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.BoardLikeDAO">
+	<resultMap type="com.team.project.entities.BoardLike" id="boardLikeMap">
+	</resultMap>
+	
+	<insert id="insert" parameterType="hashMap">
+	insert into boardlike values(
+	#{boardcode},
+	#{boardname},
+	#{userid},
+	#{eval}
+	);
+	<if test="eval == '좋아요'">
+		update board set likecount = likecount+1 where code=#{boardcode} and boardname=#{boardname};
+	</if>
+	<if test="eval == '싫어요'">
+		update board set dislikecount = dislikecount+1 where code=#{boardcode} and boardname=#{boardname};
+	</if>
+	</insert>
+	<delete id ="delete" parameterType="hashMap">
+	<if test="eval == '좋아요'">
+		update board set likecount = likecount-1 where code=#{boardcode} and boardname=#{boardname};
+	</if>
+	<if test="eval == '싫어요'">
+		update board set dislikecount = dislikecount-1 where code=#{boardcode} and boardname=#{boardname};
+	</if>
+	delete from boardlike where boardcode=#{boardcode} and boardname=#{boardname} and userid=#{userid}
+	</delete>
+	
+	<select id="duplicateCheck" resultMap="boardLikeMap" parameterType="hashMap">
+		select * from boardlike where boardcode=#{boardcode} and boardname=#{boardname} and userid=#{userid};
+	</select>
+	
+	<update id="toggleBothLikeAndDislike" parameterType="hashMap">
+		<choose>
+			<when test="eval == '싫어요'">
+				update board 
+				set likecount = likecount-1, dislikecount = dislikecount+1
+				where code=#{boardcode} and boardname=#{boardname};
+				update boardlike
+				set eval='싫어요' where boardcode=#{boardcode} and userid=#{userid};
+			</when>
+			<otherwise>
+				update board 
+				set likecount = likecount+1, dislikecount = dislikecount-1
+				where code=#{boardcode} and boardname=#{boardname};
+				update boardlike
+				set eval='좋아요' where boardcode=#{boardcode} and userid=#{userid};
+			</otherwise>
+		</choose>
+	</update>
+		
+</mapper>

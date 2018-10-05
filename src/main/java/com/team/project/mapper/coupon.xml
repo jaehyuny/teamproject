@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.CouponDAO">
+	<resultMap type="com.team.project.entities.Coupon" id="couponMap">
+	</resultMap>
+	<resultMap type="com.team.project.entities.Getcoupon" id="getcouponMap">
+	</resultMap>
+	
+	<select id="selectCouponAll" resultMap="couponMap">
+		select * from coupon order by code desc
+	</select>
+	
+	<select id="selectCouponAllPaging" parameterType="hashmap" resultMap="couponMap">
+		select * from coupon order by code desc limit #{startrow},#{endrow}
+	</select>
+	
+	<select id="selectGetCouponAll" resultMap="getcouponMap">
+		select * from getcoupon
+	</select>
+	
+	<select id="selectGetCouponInfo" resultMap="getcouponMap">
+		select * from getcoupon where code = #{code}
+	</select>
+	
+	<select id="selectUserCoupon" resultMap="couponMap">
+		select 
+		A.code, A.name, A.fixedsale, A.percentsale, A.percentmaxsale, 
+		A.moneycondition, A.catcondition, A.imglink, A.isfreeshiping,
+		B.exfireday as getexfireday, B.code as ownercode, A.acceptnum
+		from coupon A, getcoupon B where B.id = #{id} and A.code = B.couponcode and B.isusing = 0
+	</select>
+	
+	<insert id="insertCoupon" parameterType="hashmap">
+		insert into coupon (
+			code, name, fixedsale, percentsale, percentmaxsale, moneycondition,
+			catcondition, isfreeshiping, exfireday, imglink, acceptnum
+		) values (
+			(select ifnull(max(code)+1,1) from coupon alias_coupon),
+			#{name},
+			#{fixedsale},
+			#{percentsale},
+			#{percentmaxsale},
+			#{moneycondition},
+			#{catcondition},
+			#{isfreeshiping},
+			#{exfireday},
+			#{imglink},
+			#{acceptnum}
+		)
+		
+	</insert>
+	
+	<insert id="insertGetCoupon" parameterType="hashmap">
+		insert into getcoupon (
+			id, couponcode, exfireday, code, isusing
+		) values (
+			#{id, jdbcType=INTEGER},
+			#{couponcode, jdbcType=VARCHAR},
+			from_unixtime(unix_timestamp(sysdate()) + (select exfireday from coupon where code = #{couponcode}) * 86400),
+			#{code, jdbcType=INTEGER},
+			#{isusing, jdbcType=INTEGER}
+		)
+	</insert>
+	
+	<select id="selectGetCoupon" resultType="int">
+		select code from getcoupon where id = #{id} and couponcode = #{couponcode}
+	</select>
+	
+	<select id="selectOwnCoupon" parameterType="String" resultType="int">
+		select count(*) from getcoupon where isusing = 0 and id = #{id}	
+	</select>
+	
+	<delete id="deleteCoupon" parameterType="String">
+		delete from coupon where code = #{code}
+	</delete>
+	
+	<select id="selectCoupon" resultMap="couponMap">
+		select * from coupon where code=#{code}
+	</select>
+	
+	<update id="updateCoupon" parameterType="hashMap">
+		update coupon set name = #{name, jdbcType=VARCHAR}, fixedsale = #{fixedsale, jdbcType=INTEGER}, percentsale = #{percentsale, jdbcType=INTEGER},
+		percentmaxsale = #{percentmaxsale, jdbcType=INTEGER}, moneycondition = #{moneycondition, jdbcType=INTEGER}, catcondition = #{catcondition, jdbcType=VARCHAR},
+		isfreeshiping = #{isfreeshiping, jdbcType=INTEGER}, exfireday = #{exfireday, jdbcType=INTEGER}, acceptnum = #{acceptnum} where code = #{code}
+	</update>
+	
+	<select id="selectCouponCode" resultType="int">
+		select max(code) from coupon
+	</select>
+	
+	<select id="selectRowCount" parameterType="String" resultType="int">
+  		select count(*) from coupon
+  	</select>
+  	
+  	<update id="updateUsedGetCoupon" parameterType="int">
+  		update getcoupon set isusing = 1 where code = #{code}
+  	</update>
+  	
+  	<update id="updateExpiredGetCoupon" parameterType="int">
+  		update getcoupon set isusing = 2 where code = #{code} and isusing = 0
+  	</update>
+  	
+  	<select id="selectCouponFromGetcoupon" resultMap="couponMap">
+  		select A.* 
+  		from coupon A, getcoupon B
+  		where A.code = B.couponcode and B.code = #{code}
+  	</select>
+  	
+  	<insert id="insertMonthlyCoupon" parameterType="hashmap">
+  		insert into getcoupon (
+			id, couponcode, exfireday, code, isusing
+		) values 
+		<foreach collection="list" item="item" separator=" , ">
+			(#{item.id}, 
+			(select monthcoupon from grade where code = #{item.grade}), 
+			from_unixtime(unix_timestamp(sysdate()) + (select exfireday from coupon where code = (select monthcoupon from grade where code = #{item.grade})) * 86400),
+			(select ifnull(max(code)+1, 99001) from getcoupon alias_getcoupon),
+			0
+			)
+		</foreach>
+		
+  	</insert>
+	
+</mapper>

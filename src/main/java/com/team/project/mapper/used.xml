@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.UsedDAO">
+	<resultMap type="com.team.project.entities.UsedSell" id="usedSellMap">
+	</resultMap>
+	<resultMap type="com.team.project.entities.UsedBasket" id="usedBasketMap">
+	</resultMap>
+	<resultMap type="com.team.project.entities.UsedTrade" id="usedTradeMap">
+	</resultMap>
+	<select id="selectUsedSellByBookcodeLimited" resultMap="usedSellMap" parameterType="int">
+		select * from usedsell where bookcode=#{bookcode} limit 3
+	</select>
+	<select id="countUsedSellByBookCode" resultType="int" parameterType="int">
+		select count(*) from usedsell where bookcode=#{bookcode}
+	</select>
+	<select id="selectLowestPrice" parameterType="int" resultType="int">
+		select ifnull(min(price),0) from usedsell where bookcode=#{bookcode};
+	</select>
+	<insert id="insertUsedSell" parameterType="hashMap">
+		insert into usedsell(code,sellerid,bookcode,bookname,price,stock,discription,time,deleted,state) values(
+		(select ifnull(max(code)+1,1) from usedsell a),
+		#{sellerid},
+		if(#{bookcode}!=999999999,#{bookcode},null),
+		#{bookname},
+		#{price},
+		#{stock},
+		#{discription},
+		now(),
+		0,
+		'판매중'
+		)
+	</insert>
+	<select id="selectUsedSellWithBookCode" parameterType="int" resultMap="usedSellMap">
+		select usedsell.*,averagescore,buycount,sellcount 
+		from usedsell,user
+		where usedsell.sellerid=user.id and bookcode=#{bookcode} order by usedsell.time desc;
+	</select>
+	<insert id="insertUsedBasket" parameterType="hashMap" >
+		insert into usedbasket values(
+		#{userid},
+		#{amount},
+		#{usedsellcode}
+		)
+	</insert>
+	<select id="usedBasketDuplicationCheck" parameterType="hashMap" resultType="int">
+		select count(*) from usedbasket where userid=#{userid} and usedsellcode=#{usedsellcode}
+	</select>
+	<select id="selectUsedBasket" parameterType="String" resultMap="usedBasketMap">
+		select usedbasket.*, usedsell.* from usedbasket,usedsell where usedsell.code = usedbasket.usedsellcode and userid=#{userid}
+	</select>
+	<delete id="removeUsedBasket" parameterType="hashMap" >
+		delete from usedbasket where usedsellcode	=#{usedsellcode} and userid=#{userid}
+	</delete>
+	<insert id="insertUsedTrade" parameterType="hashMap">
+		<selectKey order="BEFORE" keyProperty="code" keyColumn="code" resultType="int">
+		select ifnull(max(code)+1,1) from usedtrade;
+		</selectKey>
+		insert into usedtrade values(
+		#{code},
+		#{buyerid},
+		#{sellerid},
+		#{shippingprice},
+		0,
+		"",
+		null,
+		"입금완료",
+		#{receivertell},
+		#{receiverphone},
+		#{receivername},
+		#{postno},
+		#{address1},
+		#{address2},
+		"환불계좌없다임마",
+		"은행같은거안써",
+		0,
+		sysdate()
+		);
+
+	</insert>
+	<insert id="insertUsedTradeProduct" parameterType="hashMap">
+		insert into usedtradeproduct values(
+		#{usedtradecode},
+		#{usedsell},
+		#{amount},
+		#{price},
+		#{amount}*#{price}
+		)
+	</insert>
+	<update id="updateStockOnUsedSell" parameterType="hashMap">
+		update usedsell set stock = #{stock} where code=#{code}
+	</update>
+	<update id="updateStateOnUsedSell" parameterType="hashMap">
+		update usedsell set state = #{state} where code =#{code}
+	</update>
+	<delete id="deleteUserBasketAll" parameterType="String">
+		delete from usedbasket where userid=#{id}
+	</delete>
+	<update id="updateAmountOnUsedBasket" parameterType="hashMap">
+		update usedbasket set amount=#{amount} where userid=#{userid} and usedsellcode=#{usedsellcode}
+	</update>
+	<select id="selectUsedSell" resultMap="usedSellMap">
+		select usedsell.*,averagescore,buycount,sellcount 
+		from usedsell,user
+		where usedsell.sellerid=user.id order by usedsell.time desc;
+	</select>
+	<update id="updateFinalPriceOnUsedTrade" parameterType="hashMap">
+		update usedtrade set finalprice=#{finalprice} where code=#{code}
+	</update>
+	<select id="selectUsedTrade" parameterType="String" resultMap="usedTradeMap">
+		select if(evaltext='','평가하지 않음', evaltext) evaltext, a.time, a.state,
+		a.code, a.sellerid, a.score, a.finalprice, d.name bookname		
+		from usedtrade a, usedtradeproduct b, usedsell c, book d
+		where a.buyerid = #{buyerid} and a.code = b.usedtradecode and b.usedsell = c.code
+		and c.bookcode = d.code  
+	</select>
+
+	<update id="updateScoreEvaltext" parameterType="hashMap">
+		update usedtrade set evaltext=#{evaltext}, score=#{score} where buyerid=#{buyerid}  	
+	</update>	
+	<update id="updateStateComplete" parameterType="int">
+		update usedtrade set state="거래완료" where code=#{code}
+	</update>
+	<select id="selectUsedSellByid" parameterType="String" resultMap="usedSellMap">
+		select a.*, b.time tradetime, b.score score,
+		if(b.evaltext='','평가하지 않음', b.evaltext) evaltext		
+		from usedsell a, usedtrade b, usedtradeproduct c
+		where a.code = c.usedsell and c.usedtradecode = b.code
+		and a.sellerid = #{sellerid} 
+	</select>
+
+	<select id="selectUsedSellByCode" parameterType="int" resultMap="usedSellMap">
+		select * from usedsell where code=#{code}
+	</select>
+	<select id="selectUsedSellByBookcodeBuyableOnly" parameterType="int" resultMap="usedSellMap">
+		select * from usedsell where bookcode=#{bookcode} and state='판매중';
+	</select>
+	<select id="selectUsedSellBuyableOnly" resultMap="usedSellMap">
+		select * from usedsell where state='판매중';
+	</select>
+	<select id="selectUsedSellBySellerId" parameterType="String" resultMap="usedSellMap">
+		select * from usedsell where sellerid=#{sellerid} and state='판매중';
+	</select>
+	<select id="selectUsedTradeBySellerId" resultMap="usedTradeMap">
+		select * from usedtrade where sellerid=#{sellerid} and score!=0;
+	</select>
+</mapper>

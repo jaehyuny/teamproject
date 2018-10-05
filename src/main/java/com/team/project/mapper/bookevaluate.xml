@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.BookEvaluateDAO">
+	<resultMap type="com.team.project.entities.BookEvaluate" id="BookEvaluateMap">
+	</resultMap>
+<select id="selectByBookcode" parameterType="int" resultMap="BookEvaluateMap">
+	select * from bookevaluate where bookcode=#{bookcode} order by time desc;
+	</select>
+	<select id="selectByBookcodeLimited" parameterType="int" resultMap="BookEvaluateMap">
+	select * from bookevaluate where bookcode=#{bookcode} order by time desc limit 3;
+	</select>
+	<select id="selectByBookcodeLimitedTop8" parameterType="int" resultMap="BookEvaluateMap">
+	select * from bookevaluate where bookcode=#{bookcode} order by time desc limit 8;
+	</select>
+	<select id="selectByCode" parameterType="int" resultMap="BookEvaluateMap">
+	select * from bookevaluate where code=#{code}
+	</select>
+	<select id="countByBookcode" parameterType="int" resultType="int">
+	select count(*) from bookevaluate where bookcode=#{bookcode};
+	</select>
+	<select id="duplicationCheck" parameterType="hashMap" resultType="int">
+	select count(*) from bookevaluate where bookcode=#{bookcode} and userid=#{userid};
+	</select>
+	<insert id="insert" parameterType="hashMap">
+		insert into bookevaluate(code,bookcode,userid,content,score,likecount,dislikecount) 
+		values(
+		(select ifnull(max(code)+1,1) from bookevaluate be),
+		#{bookcode},
+		#{userid},
+		#{content},
+		#{score},
+		#{likecount},
+		#{dislikecount}
+		);
+	</insert>
+	<select id="selectByUserid" parameterType="String" resultMap="BookEvaluateMap">
+	select a.*, b.name bookname from bookevaluate a, book b where a.bookcode = b.code and userid=#{userid}
+	</select>
+	<delete id="deleteByCode" parameterType="int">
+		delete from bookevaluate where code=#{code};
+	</delete>
+</mapper>

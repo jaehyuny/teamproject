@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.AuthorDAO">
+	<resultMap type="com.team.project.entities.Author" id="authorMap">
+	</resultMap>
+
+	<select id="selectAll" resultMap="authorMap">
+		select * from author order by code desc
+	</select>
+
+	<select id="selectAllPaging" parameterType="hashMap" resultMap="authorMap">
+		select * from author where name like CONCAT('%', #{find}, '%') OR code like CONCAT('%', #{find}, '%') order by code desc 
+		limit #{startrow},#{endrow}
+	</select>
+	
+	<insert id="insertAuthor" parameterType="hashMap" >
+		insert into author (code, name, birthyear, discription) 
+		values((select ifnull(max(code)+1,1) from author alias_author), #{name}, #{birthyear}, #{discription});
+		<selectKey keyProperty="code" resultType="int" order="AFTER">
+			select max(code) from author; 
+		  </selectKey>
+	</insert>
+	
+	<delete id="deleteAuthor" parameterType="int">
+		delete from author where code = #{code}
+	</delete>
+	
+	<update id="updateAuthor" parameterType="hashmap">
+		update author set name = #{name}, birthyear = #{birthyear}, discription = #{discription}
+		where code = #{code}
+	</update>
+	
+	<select id="selectAuthor" resultMap="authorMap">
+		select * from author where code = #{code}
+	</select>
+	
+	<select id="selectAuthorCode" resultType="int">
+		select max(code) from author
+	</select>
+	
+	<select id="selectRowCount" parameterType="String" resultType="int">
+  		select count(*) from author where name like CONCAT('%', #{find}, '%') OR code like CONCAT('%', #{find}, '%')
+  	</select>
+	
+	<select id="selectAuthorByName" parameterType="String" resultMap="authorMap">
+		select * from author where name=#{name}
+	</select>
+</mapper>

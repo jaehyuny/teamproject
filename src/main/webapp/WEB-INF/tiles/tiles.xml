@@ -1,0 +1,74 @@
+<!DOCTYPE tiles-definitions PUBLIC
+  "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN"
+  "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+ 
+<tiles-definitions>
+ 
+    <definition name="base" template="/WEB-INF/tiles/template.jsp">
+        <put-attribute name="header" value="/WEB-INF/tiles/header.jsp" />                                
+        <put-attribute name="footer" value="/WEB-INF/tiles/footer.jsp" />                               
+    </definition>
+ 
+    <definition name="*.page" extends="base">
+        <put-attribute name="body" value="/WEB-INF/views/{1}.jsp" />
+    </definition>
+ 
+     <definition name="*/*.page" extends="base">
+         <put-attribute name="body" value="/WEB-INF/views/{1}/{2}.jsp" />
+     </definition>
+    
+    <definition name="*/*/*.page" extends="base">
+        <put-attribute name="body" value="/WEB-INF/views/{1}/{2}/{3}.jsp" />
+    </definition>
+    
+	<!-- 회원정보 관련 템플릿 -->
+	<definition name="base-user" template="/WEB-INF/tiles/template_user.jsp">
+        <put-attribute name="header" value="/WEB-INF/tiles/header.jsp" />                                
+        <put-attribute name="footer" value="/WEB-INF/tiles/footer.jsp" />
+        <put-attribute name="menu" value="/WEB-INF/tiles/menu_user.jsp" />                                       
+    </definition>
+        <definition name="*.userinfo" extends="base-user">
+        <put-attribute name="body" value="/WEB-INF/views/{1}.jsp" />
+    </definition> 
+     <definition name="*/*.userinfo" extends="base-user">
+         <put-attribute name="body" value="/WEB-INF/views/{1}/{2}.jsp" />
+     </definition>    
+    <definition name="*/*/*.userinfo" extends="base-user">
+        <put-attribute name="body" value="/WEB-INF/views/{1}/{2}/{3}.jsp" />
+    </definition>
+    
+	<!-- 관리자 템플릿 -->
+	<definition name="base-admin" template="/WEB-INF/tiles/template_user.jsp">
+        <put-attribute name="header" value="/WEB-INF/tiles/header.jsp" />                                
+        <put-attribute name="footer" value="/WEB-INF/tiles/footer.jsp" />
+        <put-attribute name="menu" value="/WEB-INF/tiles/menu_admin.jsp" />                                       
+    </definition>
+        <definition name="*.admininfo" extends="base-admin">
+        <put-attribute name="body" value="/WEB-INF/views/{1}.jsp" />
+    </definition> 
+     <definition name="*/*.admininfo" extends="base-admin">
+         <put-attribute name="body" value="/WEB-INF/views/{1}/{2}.jsp" />
+     </definition>    
+    <definition name="*/*/*.admininfo" extends="base-admin">
+        <put-attribute name="body" value="/WEB-INF/views/{1}/{2}/{3}.jsp" />
+    </definition>
+    
+	<!-- faq 템플릿 -->
+	<definition name="base-faq" template="/WEB-INF/tiles/template_user.jsp">
+        <put-attribute name="header" value="/WEB-INF/tiles/header.jsp" />                                
+        <put-attribute name="footer" value="/WEB-INF/tiles/footer.jsp" />
+        <put-attribute name="menu" value="/WEB-INF/tiles/menu_faq.jsp" />                                       
+    </definition>
+        <definition name="*.faqinfo" extends="base-faq">
+        <put-attribute name="body" value="/WEB-INF/views/{1}.jsp" />
+    </definition> 
+     <definition name="*/*.faqinfo" extends="base-faq">
+         <put-attribute name="body" value="/WEB-INF/views/{1}/{2}.jsp" />
+     </definition>    
+    <definition name="*/*/*.faqinfo" extends="base-faq">
+        <put-attribute name="body" value="/WEB-INF/views/{1}/{2}/{3}.jsp" />
+    </definition>
+	
+    
+    
+</tiles-definitions>

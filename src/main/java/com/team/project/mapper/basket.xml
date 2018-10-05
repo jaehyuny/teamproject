@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.BasketDAO">
+	<resultMap type="com.team.project.entities.Basket" id="basketMap">
+	</resultMap>
+	<insert id="insert" parameterType="hashMap">
+		insert into basket values(
+		#{userid},
+		#{bookcode},
+		#{amount}
+		)
+	</insert>
+	<select id="duplicateCheck" parameterType="hashMap" resultType="int">
+		select count(*) from basket where userid=#{userid} and bookcode=#{bookcode}
+	</select>
+	
+	<delete id="deleteBasket" parameterType="hashMap">
+		delete from basket where userid=#{userid} and bookcode=#{bookcode}
+	</delete>
+	
+</mapper>

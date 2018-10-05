@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.team.project.service.EventDAO">
+	<resultMap type="com.team.project.entities.Event" id="eventMap">
+	</resultMap>
+	
+	<select id="selectEventList" resultMap="eventMap">
+		select 
+			Ev.code, picturelink, pagelink, startday, endday, 
+			(select title from board where Ev.code = board.code and boardname = 'event') as title, 
+			(select content from board where Ev.code = board.code and boardname = 'event') as content
+		from event Ev, board Bd 
+		group by code 
+		order by code desc limit #{startrow}, #{endrow};
+	</select>
+	
+	<select id="selectEvent" resultMap="eventMap">
+		select
+			Ev.code, picturelink, pagelink, startday, endday, 
+			(select title from board where Ev.code = board.code and boardname = 'event') as title, 
+			(select content from board where Ev.code = board.code and boardname = 'event') as content
+		from event Ev, board Bd
+		where Ev.code = #{code}
+		group by code 
+	</select>
+	
+	<insert id="insertEvent" parameterType="hashmap">
+		insert into event (
+			code, picturelink, pagelink, startday, endday
+		) values (
+			(select ifnull(max(code)+1,1) from event alias_event),
+			#{picturelink},
+			#{pagelink},
+			#{startday},
+			#{endday}
+		)
+	</insert>
+	
+	<select id="selectEventCount" resultType="integer">
+		select count(*) from board where boardname = 'event'
+	</select>
+	
+	
+</mapper>
